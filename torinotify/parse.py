@@ -50,12 +50,12 @@ def main():
                     break
 
                 if entry.get('title_must_contain', None):
-                    if not re.search(entry['title_must_contain'], title):
+                    if not re.search(entry['title_must_contain'], title, re.IGNORECASE):
                         continue
 
                 if entry.get('page_must_not_contain', None):
                     page_text = requests.get(link_parsed).text
-                    if re.search(entry['page_must_not_contain'], page_text):
+                    if re.search(entry['page_must_not_contain'], page_text, re.IGNORECASE):
                         continue
 
                 new_links.append({'title': title, 'url': link_parsed})
