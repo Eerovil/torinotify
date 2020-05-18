@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 with open('settings.json', 'r') as f:
     settings = json.load(f)
     BOT_TOKEN = settings['bot_token']
+    DEBUG_CHAT = settings.get('debug_chat')
 
 
 def send_telegram(bot_message, chat_id):
@@ -70,10 +71,14 @@ def main():
                 send_telegram("{}, {}".format(new_link['title'], new_link['url']), entry['chatId'])
         except Exception as e:
             print("Error: {}".format(e))
+            send_telegram("Error: {}".format(e), DEBUG_CHAT)
 
     with open('parsed.json', 'w') as f:
         json.dump(parsed, f, indent=4)
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        send_telegram("Error in main: {}".format(e), DEBUG_CHAT)
