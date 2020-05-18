@@ -53,6 +53,11 @@ def main():
                     if not re.search(entry['title_must_contain'], title):
                         continue
 
+                if entry.get('page_must_not_contain', None):
+                    page_text = requests.get(link_parsed).text
+                    if re.search(entry['page_must_not_contain'], page_text):
+                        continue
+
                 new_links.append({'title': title, 'url': link_parsed})
 
             if entry['url'] not in parsed:
