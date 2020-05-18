@@ -1,0 +1,4 @@
+*.pyc
+
+venv
+torinotify/*.json

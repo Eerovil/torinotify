@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <title>ToriNotify</title>
+    <link href='https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons' rel="stylesheet">
+    <link href="https://unpkg.com/vuetify@1.5.14/dist/vuetify.min.css" rel="stylesheet">
+    <style>
+    </style>
+</head>
+
+<body>
+
+<v-app id="app" v-cloak>
+<home></home>
+</v-app>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.js"></script>
+<script src="https://unpkg.com/http-vue-loader"></script>
+<script src="https://unpkg.com/vuetify@1.5.14/dist/vuetify.min.js"></script>
+<script src="https://unpkg.com/vuex@3.1.1"></script>
+<!-- Vue Pages and Components here -->
+<script src='/static/home.vue.js'></script>
+
+<script>
+function _handleFailure(error) {
+    if (error.response == undefined) {
+        console.log(error);
+        return;
+    }
+    document.open();
+    document.write(error.response.data);
+    document.close();
+}
+
+const store = new Vuex.Store({
+  state: {
+    entries: [],
+  },
+  mutations: {
+    updateEntries(state, entries) {
+      state.entries = entries;
+    },
+  }
+})
+
+var app = new Vue({
+    el: '#app',
+    watch: {},
+    methods: {},
+    store,
+})
+</script>
+
+</body>
+
+</html>
