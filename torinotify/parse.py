@@ -37,8 +37,11 @@ def main():
             response = requests.get(entry['url'])
             soup = BeautifulSoup(response.content, 'html.parser')
             new_links = []
+            new_parsed = []
             if entry['url'] not in parsed:
                 parsed[entry['url']] = []
+            already_parsed_urls = [p['url'] for p in parsed[entry['url']]]
+            counter = 0
 
             for link in soup.select("div.main div.list_mode_thumb a"):
                 if not link.select_one('.desc_flex'):
@@ -47,24 +50,24 @@ def main():
                     _part for _part in link.select_one('.ad-details-left').getText().split()
                 ])
                 link_parsed = link['href'].split('?')[0]
-                if parsed[entry['url']] and link_parsed == parsed[entry['url']][0]['url']:
-                    break
+                new_parsed.append({'title': title, 'url': link_parsed})
+                # Only allow "new" status for links within the 5 first on the page
+                # (A new link can appear from page 2 if one is deleted from page 1)
+                if link_parsed not in already_parsed_urls and counter < 5:
+                    if entry.get('title_must_contain', None):
+                        if not re.search(entry['title_must_contain'], title, re.IGNORECASE):
+                            continue
 
-                if entry.get('title_must_contain', None):
-                    if not re.search(entry['title_must_contain'], title, re.IGNORECASE):
-                        continue
+                    if entry.get('page_must_not_contain', None):
+                        page_text = requests.get(link_parsed).text
+                        if re.search(entry['page_must_not_contain'], page_text, re.IGNORECASE):
+                            continue
 
-                if entry.get('page_must_not_contain', None):
-                    page_text = requests.get(link_parsed).text
-                    if re.search(entry['page_must_not_contain'], page_text, re.IGNORECASE):
-                        continue
+                    new_links.append({'title': title, 'url': link_parsed})
+                counter += 1
 
-                new_links.append({'title': title, 'url': link_parsed})
-
-            if entry['url'] not in parsed:
-                parsed[entry['url']] = []
-            parsed[entry['url']] = new_links + parsed[entry['url']]
-            parsed[entry['url']] = parsed[entry['url']][:10]
+            # Replace parsed entries with the new ones
+            parsed[entry['url']] = new_parsed
 
             for new_link in new_links:
                 print("Found new links: {}".format(new_link))
