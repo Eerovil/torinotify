@@ -66,8 +66,12 @@ def main():
                     new_links.append({'title': title, 'url': link_parsed})
                 counter += 1
 
-            # Replace parsed entries with the new ones
-            parsed[entry['url']] = new_parsed
+            # Add new ones to parsed
+            for value in new_parsed.items():
+                if value['url'] not in already_parsed_urls:
+                    parsed[entry['url']].insert(0, value)
+            # Keep this reasonable
+            parsed[entry['url']] = parsed[entry['url']][:100]
 
             for new_link in new_links:
                 print("Found new links: {}".format(new_link))
