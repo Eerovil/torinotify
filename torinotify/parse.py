@@ -67,7 +67,7 @@ def main():
                 counter += 1
 
             # Add new ones to parsed
-            for value in new_parsed.items():
+            for value in new_parsed:
                 if value['url'] not in already_parsed_urls:
                     parsed[entry['url']].insert(0, value)
             # Keep this reasonable
