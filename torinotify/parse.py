@@ -58,6 +58,17 @@ def main():
                         if not re.search(entry['title_must_contain'], title, re.IGNORECASE):
                             continue
 
+                    if entry.get('max_price', None):
+                        try:
+                            price = (
+                                link.select_one('.list_price').getText().replace('€', '').strip()
+                            )
+                            if price and int(price) > int(entry['max_price']):
+                                print('Price too high: {}'.format(price))
+                                continue
+                        except Exception as e:
+                            send_telegram("Error: {}".format(e), DEBUG_CHAT)
+
                     if entry.get('page_must_not_contain', None):
                         page_text = requests.get(link_parsed).text
                         if re.search(entry['page_must_not_contain'], page_text, re.IGNORECASE):
