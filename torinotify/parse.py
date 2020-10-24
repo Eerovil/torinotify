@@ -28,8 +28,12 @@ def main():
     try:
         with open('parsed.json', 'r') as f:
             parsed = json.load(f)
-    except FileNotFoundError:
+    except Exception:
         parsed = {}
+
+    initialize = False
+    if not parsed:
+        initialize = True
 
     for entry in entries:
         try:
@@ -42,6 +46,9 @@ def main():
                 parsed[entry['url']] = []
             already_parsed_urls = [p['url'] for p in parsed[entry['url']]]
             counter = 0
+            
+            # For duplicated
+            handled_urls = []
 
             for link in soup.select("div.main div.list_mode_thumb a"):
                 if not link.select_one('.desc_flex'):
@@ -53,18 +60,32 @@ def main():
                 new_parsed.append({'title': title, 'url': link_parsed})
                 # Only allow "new" status for links within the 5 first on the page
                 # (A new link can appear from page 2 if one is deleted from page 1)
-                if link_parsed not in already_parsed_urls and counter < 5:
+                if link_parsed not in already_parsed_urls and link_parsed not in handled_urls and counter < 5:
                     if entry.get('title_must_contain', None):
                         if not re.search(entry['title_must_contain'], title, re.IGNORECASE):
                             continue
+                    if re.search('varattu', title, re.IGNORECASE):
+                        continue
 
+                    price = ''
                     if entry.get('max_price', None):
                         try:
                             price = (
-                                link.select_one('.list_price').getText().replace('€', '').strip()
+                                link.select_one('.list_price').getText().replace('€', '').replace(' ', '').strip()
                             )
                             if price and int(price) > int(entry['max_price']):
                                 print('Price too high: {}'.format(price))
+                                continue
+                        except Exception as e:
+                            send_telegram("Error: {}".format(e), DEBUG_CHAT)
+
+                    if entry.get('min_price', None):
+                        try:
+                            price = (
+                                link.select_one('.list_price').getText().replace('€', '').replace(' ', '').strip()
+                            )
+                            if price and int(price) <= int(entry['min_price']):
+                                print('Price too low: {}'.format(price))
                                 continue
                         except Exception as e:
                             send_telegram("Error: {}".format(e), DEBUG_CHAT)
@@ -73,8 +94,14 @@ def main():
                         page_text = requests.get(link_parsed).text
                         if re.search(entry['page_must_not_contain'], page_text, re.IGNORECASE):
                             continue
+                    
+                    if entry.get('page_must_contain', None):
+                        page_text = requests.get(link_parsed).text
+                        if not re.search(entry['page_must_contain'], page_text, re.IGNORECASE):
+                            continue
 
                     new_links.append({'title': title, 'url': link_parsed})
+                handled_urls.append(link_parsed)
                 counter += 1
 
             # Add new ones to parsed
@@ -86,7 +113,8 @@ def main():
 
             for new_link in new_links:
                 print("Found new links: {}".format(new_link))
-                send_telegram("{}, {}".format(new_link['title'], new_link['url']), entry['chatId'])
+                if not initialize:
+                    send_telegram("{}, {}".format(new_link['title'], new_link['url']), entry['chatId'])
         except Exception as e:
             print("Error: {}".format(e))
             send_telegram("Error: {}".format(e), DEBUG_CHAT)
