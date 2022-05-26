@@ -50,6 +50,9 @@ def main():
             # For duplicated
             handled_urls = []
 
+            if soup.select('.failover'):
+                continue
+
             for link in soup.select("div.main div.list_mode_thumb a"):
                 if not link.select_one('.desc_flex'):
                     continue
@@ -115,6 +118,8 @@ def main():
                 print("Found new links: {}".format(new_link))
                 if not initialize:
                     send_telegram("{}, {}".format(new_link['title'], new_link['url']), entry['chatId'])
+        except requests.exceptions.ConnectionError:
+            pass
         except Exception as e:
             print("Error: {}".format(e))
             send_telegram("Error: {}".format(e), DEBUG_CHAT)
@@ -126,5 +131,7 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+    except requests.exceptions.ConnectionError:
+        pass
     except Exception as e:
         send_telegram("Error in main: {}".format(e), DEBUG_CHAT)
